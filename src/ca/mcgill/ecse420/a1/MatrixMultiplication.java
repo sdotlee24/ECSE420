@@ -2,24 +2,20 @@ package ca.mcgill.ecse420.a1;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("ALL")
 public class MatrixMultiplication {
 
-    private static final int NUMBER_THREADS = 1;
+    private static final int NUMBER_THREADS = 4;
     private static final int MATRIX_SIZE = 2000;
 
     public static void main(String[] args) {
-
-        // Generate two random matrices, same size
-        double[][] a = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
-        double[][] b = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
-        sequentialMultiplyMatrix(a, b);
-        parallelMultiplyMatrix(a, b);
+        findMatMulRuntimes();
     }
 
     /**
-     * Returns the result of a sequential matrix multiplication
+     * Returns the result of a sequential matrix multiplication *assuming valid matrix sizes
      * The two matrices are randomly generated
      *
      * @param a is the first matrix
@@ -28,9 +24,6 @@ public class MatrixMultiplication {
      */
     public static double[][] sequentialMultiplyMatrix(double[][] a, double[][] b) {
 
-        if (a[0].length != b.length) { // checking if valid matrices for multiplication
-            throw new ArithmeticException("Matrix dimensions dont match");
-        }
         int row = a.length;
         int col = b[0].length;
         int inter = a[0].length;
@@ -47,7 +40,7 @@ public class MatrixMultiplication {
     }
 
     /**
-     * Returns the result of a concurrent matrix multiplication
+     * Returns the result of a concurrent matrix multiplication *assuming valid matrix sizes
      * The two matrices are randomly generated
      *
      * @param a is the first matrix
@@ -56,33 +49,63 @@ public class MatrixMultiplication {
      */
     public static double[][] parallelMultiplyMatrix(double[][] a, double[][] b) {
 
-        if (a[0].length != b.length) { // checking if valid matrices for multiplication
-            throw new ArithmeticException("Matrix dimensions dont match");
-        }
         int row = a.length;
         int col = b[0].length;
         int inter = a[0].length;
         double[][] out = new double[row][col];
 
         ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
-
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                executor.execute(new MultiplyMatrixTask(a, b, out, i, j, inter));
+            }
+        }
+        executor.shutdown();
+        try {
+            executor.awaitTermination(2, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            System.out.println("ERROR" + e);
+        }
         return out;
     }
     private static class MultiplyMatrixTask implements Runnable {
         private double[][] a;
         private double[][] b;
+        private double[][] out;
+        private int i;
+        private int j;
         private int k;
 
-
-        public MultiplyMatrixTask(double[][] a, double[][] b, int k) {
+        public MultiplyMatrixTask(double[][] a, double[][] b, double[][] out, int i, int j, int k) {
             this.a = a;
             this.b = b;
+            this.out = out;
+            this.i = i;
+            this.j = j;
             this.k = k;
         }
         @Override
         public void run() {
-
+            for (int c = 0; c < k; c++) {
+                out[i][j] += a[i][c] * b[c][j];
+            }
         }
+    }
+    private static void findMatMulRuntimes() {
+        double[][] a = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
+        double[][] b = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
+
+        long startTime = System.nanoTime();
+        sequentialMultiplyMatrix(a, b);
+        long endTime = System.nanoTime();
+        double sequentialTime = (endTime - startTime) / 1_000_000.0;
+
+        startTime = System.nanoTime();
+        parallelMultiplyMatrix(a, b);
+        endTime = System.nanoTime();
+        double parallelTime = (endTime - startTime) / 1_000_000.0;
+
+        System.out.println("Sequential runtime: " + sequentialTime + " ms, Parallel Time: " + parallelTime + "ms.");
     }
     /**
      * Populates a matrix of given size with randomly generated integers between 0-10.
