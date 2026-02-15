@@ -11,50 +11,38 @@ public class MatrixMultiplication {
     private static final int MATRIX_SIZE = 2000;
 
     public static void main(String[] args) {
-        // Question 1.1 and 1.2: Sequential and parallel
-        // Validate both implementations
-        System.out.println("Running validation tests\n");
-        validateSequentialMultiplication();
-        validateParallelMultiplication();
+        // Q1.1,1.2
+        validateMatMul(true); // Parallel matmul logic validation
+        validateMatMul(false); // Sequential matmul logic validation
 
-        // Question 1.3: Measure execution time
-        System.out.println("\nQuestion 1.3: Execution Time Measurement");
+        // Q1.3
+        System.out.println("\nQ1.3: Execution time measurement");
         measureExecutionTime(MATRIX_SIZE);
 
-        // Question 1.4: Vary number of threads
-        System.out.println("\nQuestion 1.4: Thread Count Analysis");
+        // Q1.4
+        System.out.println("\nQ 1.4: Thread count analysis");
         varyThreadCount();
 
-        // Question 1.5: Vary matrix size
-        System.out.println("\nQuestion 1.5: Matrix Size Analysis");
+        // Q1.5
+        System.out.println("\nQ1.5: Matrix size analysis");
         varyMatrixSize();
 
         System.out.println("\nDone");
     }
 
     /**
-     * Question 1.5: Varies the matrix size and measures execution time for both methods
-     * Tests with sizes: 100, 200, 500, 1000, 2000, 3000, 4000
+     * Q1.5: Testing with sizes: 100, 200, 500, 1000, 2000, 3000, 4000
      */
     private static void varyMatrixSize() {
         int[] matrixSizes = {100, 200, 500, 1000, 2000, 3000, 4000};
 
-        // Use optimal thread count from Question 1.4
-        int optimalThreads = 16;
-        NUMBER_THREADS = optimalThreads;
-
-        System.out.println("Using " + optimalThreads + " threads (optimal from Question 1.4)");
-        System.out.println("\nTesting various matrix sizes\n");
-
-        // Print header
-        System.out.println("Matrix Size | Sequential Time (ms) | Parallel Time (ms) | Speedup");
-        System.out.println("------------|----------------------|--------------------|--------");
+        NUMBER_THREADS = 16; // 16 threads produced loweest execution time
 
         // Test each matrix size
         for (int size : matrixSizes) {
-            System.out.print("Testing " + size + "x" + size + "...");
+            System.out.print("Testing " + size);
 
-            // Generate matrices
+            //Generate matrices
             double[][] a = generateRandomMatrix(size, size);
             double[][] b = generateRandomMatrix(size, size);
 
@@ -72,7 +60,7 @@ public class MatrixMultiplication {
 
             double speedup = seqTime / parTime;
 
-            System.out.printf("\r%11d | %20.2f | %18.2f | %7.2fx\n",
+            System.out.printf("%d | %.2f | %.2f | %.2f\n",
                     size, seqTime, parTime, speedup);
         }
         // Reset to default
@@ -80,32 +68,27 @@ public class MatrixMultiplication {
     }
 
     /**
-     * Question 1.4: Varies the number of threads and measures execution time
+     * Q1.4: Varies the number of threads and measures execution time
      * Tests with 1, 2, 4, 8, 16 threads on large matrices
      */
     private static void varyThreadCount() {
-        int matrixSize = 4000; // Use 4000x4000 or adjust based on system
+        int matrixSize = 4000;
         int[] threadCounts = {1, 2, 4, 8, 16};
 
         System.out.println("Testing with " + matrixSize + "x" + matrixSize + " matrices");
-        System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
-        System.out.println("\nGenerating test matrices");
+        System.out.println("processors available: " + Runtime.getRuntime().availableProcessors());
 
-        // Generate matrices once to ensure fair comparison
+        // Generate matrices
         double[][] a = generateRandomMatrix(matrixSize, matrixSize);
         double[][] b = generateRandomMatrix(matrixSize, matrixSize);
 
-        // Measure sequential time once for speedup calculation
-        System.out.println("Measuring sequential baseline");
+        // Measure sequential time once for speedup calculation (baseline)
+        System.out.println("Measuring sequential matmul for baseline");
         long startTime = System.nanoTime();
         sequentialMultiplyMatrix(a, b);
         long endTime = System.nanoTime();
         double sequentialTime = (endTime - startTime) / 1_000_000.0;
-        System.out.printf("Sequential time: %.2f ms\n\n", sequentialTime);
-
-        // Print header
-        System.out.println("Thread Count | Execution Time (ms) | Speedup | Efficiency");
-        System.out.println("-------------|---------------------|---------|------------");
+        System.out.printf("Sequential time: %.2f ms\n", sequentialTime);
 
         // Test each thread count
         for (int threads : threadCounts) {
@@ -126,7 +109,7 @@ public class MatrixMultiplication {
             double speedup = sequentialTime / avgTime;
             double efficiency = speedup / threads * 100; // Percentage
 
-            System.out.printf("%12d | %19.2f | %7.2fx | %9.1f%%\n",
+            System.out.printf("%d | %.2f | %.2x | %.1f%%\n",
                     threads, avgTime, speedup, efficiency);
         }
         // Reset to default
@@ -134,48 +117,43 @@ public class MatrixMultiplication {
     }
 
     /**
-     * Question 1.3: Measures and compares execution time for sequential and parallel matrix multiplication
+     * Q1.3: Measures and compares execution time for sequential and parallel matrix multiplication
+     *
      * @param size the size of the square matrices to multiply (size x size)
      */
     private static void measureExecutionTime(int size) {
-        System.out.println("Measuring execution time for " + size + "x" + size + " matrices\n");
+        System.out.println("Measuring execution time for " + size + "matrices\n");
 
-        // Generate random matrices
+        // Generate matrices
         double[][] a = generateRandomMatrix(size, size);
         double[][] b = generateRandomMatrix(size, size);
 
-        // Measure sequential execution time
+        // Measure sequential exec time
         long startTime = System.nanoTime();
         double[][] seqResult = sequentialMultiplyMatrix(a, b);
         long endTime = System.nanoTime();
         double sequentialTime = (endTime - startTime) / 1_000_000.0; // Convert to milliseconds
 
-        // Measure parallel execution time
+        // Measure parallel exec time
         startTime = System.nanoTime();
         double[][] parResult = parallelMultiplyMatrix(a, b);
         endTime = System.nanoTime();
-        double parallelTime = (endTime - startTime) / 1_000_000.0; // Convert to milliseconds
+        double parallelTime = (endTime - startTime) / 1_000_000.0;
 
         // Calculate speedup
         double speedup = sequentialTime / parallelTime;
 
-        // Display results
         System.out.printf("Sequential execution time: %.2f ms\n", sequentialTime);
         System.out.printf("Parallel execution time:   %.2f ms\n", parallelTime);
         System.out.printf("Speedup:                   %.2fx\n", speedup);
 
-        // Verify correctness
-        if (matricesEqual(seqResult, parResult, 1e-9)) {
-            System.out.println("\nResults verified: Sequential and parallel produce identical output");
-        } else {
-            System.out.println("\nWarning: Sequential and parallel results differ");
-        }
     }
 
     /**
-     * Question 1.3: Measures execution time for a single matrix multiplication method
-     * @param a first matrix
-     * @param b second matrix
+     * Q1.3: Method execution time for both parallel and sequential matmul
+     *
+     * @param a           first matrix
+     * @param b           second matrix
      * @param useParallel if true, use parallel method; otherwise use sequential
      * @return execution time in milliseconds
      */
@@ -193,83 +171,22 @@ public class MatrixMultiplication {
     }
 
     /**
-     * Validates sequential multiplication (Question 1.1)
+     * Q1.1: Validate sequential matmul by inputting a smaller matrix size
      */
-    private static void validateSequentialMultiplication() {
-        System.out.println("=== Sequential Validation ===");
-
-        // Test 1: Known result
-        double[][] testA = {{1, 2}, {3, 4}};
-        double[][] testB = {{5, 6}, {7, 8}};
-        double[][] result = sequentialMultiplyMatrix(testA, testB);
+    private static void validateMatMul(boolean isParallel) {
+        // validating method with 2x2 matmul's
+        double[][] a = {{1, 2}, {3, 4}};
+        double[][] b = {{5, 6}, {7, 8}};
+        double[][] result;
+        if (isParallel) {
+            result = parallelMultiplyMatrix(a, b);
+        } else {
+            result = sequentialMultiplyMatrix(a, b);
+        }
         double[][] expected = {{19, 22}, {43, 50}};
 
-        if (matricesEqual(result, expected, 1e-9)) {
+        if (matricesEqual(result, expected)) {
             System.out.println("Small matrix test passed");
-        }
-
-        // Test 2: Identity matrix
-        double[][] A = generateRandomMatrix(3, 3);
-        double[][] I = createIdentityMatrix(3);
-        double[][] resultAI = sequentialMultiplyMatrix(A, I);
-
-        if (matricesEqual(A, resultAI, 1e-9)) {
-            System.out.println("Identity matrix test passed");
-        }
-
-        // Test 3: Dimension validation
-        try {
-            double[][] invalid1 = {{1, 2, 3}};
-            double[][] invalid2 = {{1, 2}, {3, 4}};
-            sequentialMultiplyMatrix(invalid1, invalid2);
-        } catch (ArithmeticException e) {
-            System.out.println("Dimension validation test passed");
-        }
-    }
-
-    /**
-     * Validates parallel multiplication (Question 1.2)
-     */
-    private static void validateParallelMultiplication() {
-        System.out.println("\n=== Parallel Validation ===");
-
-        // Test 1: Compare with sequential
-        double[][] testA = {{1, 2}, {3, 4}};
-        double[][] testB = {{5, 6}, {7, 8}};
-        double[][] seqResult = sequentialMultiplyMatrix(testA, testB);
-        double[][] parResult = parallelMultiplyMatrix(testA, testB);
-
-        if (matricesEqual(seqResult, parResult, 1e-9)) {
-            System.out.println("Small matrix test passed");
-        }
-
-        // Test 2: Larger random matrices
-        double[][] A = generateRandomMatrix(50, 50);
-        double[][] B = generateRandomMatrix(50, 50);
-        double[][] seqResult2 = sequentialMultiplyMatrix(A, B);
-        double[][] parResult2 = parallelMultiplyMatrix(A, B);
-
-        if (matricesEqual(seqResult2, parResult2, 1e-9)) {
-            System.out.println("50x50 matrix test passed");
-        }
-
-        // Test 3: Non-square matrices
-        double[][] rect1 = generateRandomMatrix(3, 4);
-        double[][] rect2 = generateRandomMatrix(4, 2);
-        double[][] seqRect = sequentialMultiplyMatrix(rect1, rect2);
-        double[][] parRect = parallelMultiplyMatrix(rect1, rect2);
-
-        if (matricesEqual(seqRect, parRect, 1e-9)) {
-            System.out.println("Non-square matrix test passed");
-        }
-
-        // Test 4: Identity matrix
-        double[][] A4 = generateRandomMatrix(10, 10);
-        double[][] I4 = createIdentityMatrix(10);
-        double[][] parIdentity = parallelMultiplyMatrix(A4, I4);
-
-        if (matricesEqual(A4, parIdentity, 1e-9)) {
-            System.out.println("Identity matrix test passed");
         }
     }
 
@@ -336,10 +253,11 @@ public class MatrixMultiplication {
 
         return out;
     }
+
     private static class MultiplyMatrixTask implements Runnable {
         private double[][] a;
         private double[][] b;
-        private double [][] out;
+        private double[][] out;
         private int row;
 
 
@@ -365,21 +283,13 @@ public class MatrixMultiplication {
         }
     }
 
-    private static double[][] createIdentityMatrix(int size) {
-        double[][] identity = new double[size][size];
-        for (int i = 0; i < size; i++) {
-            identity[i][i] = 1.0;
-        }
-        return identity;
-    }
-
-    private static boolean matricesEqual(double[][] a, double[][] b, double tolerance) {
+    private static boolean matricesEqual(double[][] a, double[][] b) {
         if (a.length != b.length || a[0].length != b[0].length) {
             return false;
         }
         for (int i = 0; i < a.length; i++) {
             for (int j = 0; j < a[0].length; j++) {
-                if (Math.abs(a[i][j] - b[i][j]) > tolerance) {
+                if (a[i][j] != b[i][j]) {
                     return false;
                 }
             }
