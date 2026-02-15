@@ -22,6 +22,7 @@ public class Deadlock {
             lockB.lock();
             System.out.println("got lock b");
 
+            // releasing locks
             lockB.unlock();
             lockA.unlock();
         });
@@ -39,6 +40,7 @@ public class Deadlock {
             lockA.lock(); //deadlock
             System.out.println("got lock A");
 
+            // releasing threads
             lockA.unlock();
             lockB.unlock();
         });

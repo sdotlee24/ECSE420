@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("ALL")
 public class MatrixMultiplication {
 
-    private static final int NUMBER_THREADS = 4;
-    private static final int MATRIX_SIZE = 2000;
+    private static final int NUMBER_THREADS = 1;
+    private static final int MATRIX_SIZE = 4000;
 
     public static void main(String[] args) {
         findMatMulRuntimes();
@@ -56,9 +56,8 @@ public class MatrixMultiplication {
 
         ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
         for (int i = 0; i < row; i++) {
-            for (int j = 0; j < col; j++) {
-                executor.execute(new MultiplyMatrixTask(a, b, out, i, j, inter));
-            }
+            executor.execute(new MatrixRowTask(a, b, out, i, col, inter));
+
         }
         executor.shutdown();
         try {
@@ -68,26 +67,28 @@ public class MatrixMultiplication {
         }
         return out;
     }
-    private static class MultiplyMatrixTask implements Runnable {
+    private static class MatrixRowTask implements Runnable {
         private double[][] a;
         private double[][] b;
         private double[][] out;
         private int i;
-        private int j;
+        private int numCols;
         private int k;
 
-        public MultiplyMatrixTask(double[][] a, double[][] b, double[][] out, int i, int j, int k) {
+        public MatrixRowTask(double[][] a, double[][] b, double[][] out, int i, int numCols, int k) {
             this.a = a;
             this.b = b;
             this.out = out;
             this.i = i;
-            this.j = j;
+            this.numCols = numCols;
             this.k = k;
         }
         @Override
         public void run() {
-            for (int c = 0; c < k; c++) {
-                out[i][j] += a[i][c] * b[c][j];
+            for (int j = 0; j < numCols; j++) {
+                for (int c = 0; c < k; c++) {
+                    out[i][j] += a[i][c] * b[c][j];
+                }
             }
         }
     }
@@ -95,17 +96,13 @@ public class MatrixMultiplication {
         double[][] a = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
         double[][] b = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
 
+        System.out.println("Measuring parallel...");
         long startTime = System.nanoTime();
-        sequentialMultiplyMatrix(a, b);
+        double[][] parResult = parallelMultiplyMatrix(a, b);
         long endTime = System.nanoTime();
-        double sequentialTime = (endTime - startTime) / 1_000_000.0;
-
-        startTime = System.nanoTime();
-        parallelMultiplyMatrix(a, b);
-        endTime = System.nanoTime();
         double parallelTime = (endTime - startTime) / 1_000_000.0;
 
-        System.out.println("Sequential runtime: " + sequentialTime + " ms, Parallel Time: " + parallelTime + "ms.");
+        System.out.println("Parallel (" + NUMBER_THREADS + " threads): " + parallelTime + " ms");
     }
     /**
      * Populates a matrix of given size with randomly generated integers between 0-10.

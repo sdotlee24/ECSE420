@@ -20,7 +20,7 @@ public class DiningPhilosophersNoStarvation {
         // initialize philosophers with new rule (last philosopher picks up reverse order chopsticks)
         for (int i = 0; i < numberOfPhilosophers; i++) {
             Lock leftChopstick = chopsticks[i];
-            Lock rightChopstick = chopsticks[(i+1) % numberOfPhilosophers];
+            Lock rightChopstick = chopsticks[(i + 1) % numberOfPhilosophers];
             // last philosopher picks up chopstick in reverse order to avoid deadlock
             if (i == numberOfPhilosophers - 1) {
                 philosophers[i] = new Philosopher(i, rightChopstick, leftChopstick);
